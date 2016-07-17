@@ -1,10 +1,30 @@
 // Import the required libraries
+var Sequelize = require('sequelize');
 var graphql = require('graphql');
 var graphqlHTTP = require('express-graphql');
 var express = require('express');
+var app = express();
 
-// Import the data you created above
-var data = require('./data.json');
+// Connect to DB
+var sequelize = new Sequelize(
+  process.env.POSTGRES_DB,
+  process.env.POSTGRES_USER,
+  null,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
+  }
+);
+
+// Check DB connection
+sequelize
+  .authenticate()
+  .then(function(err) {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(function (err) {
+    console.log('Unable to connect to the database:', err);
+  });
 
 // Define the User type with two string fields: `id` and `name`.
 // The type of User is GraphQLObjectType, which has child fields
@@ -43,13 +63,14 @@ var schema = new graphql.GraphQLSchema({
   })
 });
 
-express()
-  .use('/graphql', graphqlHTTP({ schema: schema, pretty: true }))
-  .listen(3000);
+var port = '3000'
+app.use('/graphql', graphqlHTTP({ schema: schema, pretty: true }));
+var server = app.listen(port, function () {
+  var ip = require('os').networkInterfaces().eth0[0].address;
+  console.log('GraphQL server running on http://'+ip+':'+port+'/graphql');
+});
 
-var exec = require('child_process').exec;
-var cmd = 'hostname -I';
-
-exec(cmd, function(error, stdout, stderr) {
-  console.log('GraphQL server running on http://'+stdout.trim()+':3000/graphql');
+// Print Users from DB
+sequelize.query('SELECT * FROM "Users"', {raw: true}).then(function(myTableRows) {
+  console.log(myTableRows)
 });

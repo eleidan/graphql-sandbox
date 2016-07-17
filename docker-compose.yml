@@ -3,3 +3,46 @@ services:
   web:
     build: .
     image: graphql-tut
+    links:
+      - db
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+
+  test:
+    build: .
+    image: graphql-tut
+    links:
+      - db_test
+    env_file: .env
+    environment:
+      - NODE_ENV=test
+      - DB_HOST=db_test
+      - POSTGRES_DB=my_test
+
+  dev:
+    build: .
+    image: graphql-tut
+    links:
+      - db_dev
+    env_file: .env
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=db_dev
+      - POSTGRES_DB=my_dev
+
+  db_test:
+    extends:
+      service: db
+    environment:
+      - POSTGRES_DB=my_test
+
+  db_dev:
+    extends:
+      service: db
+    environment:
+      - POSTGRES_DB=my_dev
+
+  db:
+    image: postgres:9.5.2
+    env_file: .env
